@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" id="AnchorPane" prefHeight="396.0" prefWidth="630.0"
+            style="-fx-background-color: #303030;" xmlns="http://javafx.com/javafx/8.0.172-ea"
+            fx:controller="de.femtopedia.studip.hisqisclient.Main">
+    <ListView fx:id="subjectList" layoutY="-2.0" prefHeight="396.0" prefWidth="343.0"
+              style="-fx-background-color: #383838;" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="-2.0"/>
+    <Label fx:id="current" alignment="TOP_LEFT" contentDisplay="TOP" layoutX="344.0" layoutY="14.0" prefHeight="368.0"
+           prefWidth="284.0">
+        <font>
+            <Font size="12.0"/>
+        </font>
+    </Label>
+</AnchorPane>

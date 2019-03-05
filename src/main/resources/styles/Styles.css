@@ -1,0 +1,35 @@
+.button {
+    -fx-font-weight: bold;
+}
+
+.text-area {
+    text-area-background: #383838;
+    -fx-text-fill: #009900;
+}
+
+.text-area .content {
+    -fx-background-color: text-area-background;
+}
+
+.list-view .list-cell:even {
+    -fx-background-color: #383838;
+    -fx-text-fill: #999999;
+}
+
+.list-view .list-cell:odd {
+    -fx-background-color: #454545;
+    -fx-text-fill: #999999;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: #aaaaaa;
+    -fx-text-fill: #000000;
+}
+
+.text-field {
+    -fx-text-fill: #999999;
+}
+
+.label {
+    -fx-text-fill: #999999
+}
