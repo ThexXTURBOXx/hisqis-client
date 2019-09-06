@@ -195,7 +195,6 @@ public class Main extends Application implements Initializable {
 					}
 				}
 			}
-			api.shutdown();
 			subjectList.setOnMouseClicked((event) -> {
 				int index = subjectList.getSelectionModel().getSelectedIndex();
 				Object clicked = objects.get(index);
