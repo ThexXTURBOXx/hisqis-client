@@ -6,12 +6,14 @@ import de.femtopedia.studip.hisqis.parsed.Category;
 import de.femtopedia.studip.hisqis.parsed.CourseOfStudy;
 import de.femtopedia.studip.hisqis.parsed.Mark;
 import de.femtopedia.studip.hisqis.parsed.Student;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,206 +42,191 @@ import javafx.util.Pair;
 
 public class Main extends Application implements Initializable {
 
-	private static Main instance;
+    @FXML
+    private ListView<String> subjectList;
+    @FXML
+    private Label current;
+    private String username;
+    private String password;
+    private List<Object> objects;
 
-	private Stage stage;
-	@FXML
-	private ListView subjectList;
-	@FXML
-	private Label current;
-	private String username;
-	private String password;
-	private Student student;
-	private List<Object> objects;
-	private Scene scene;
+    public static void main(String[] args) {
+        launch(args);
+    }
 
-	public static Main getInstance() {
-		return instance;
-	}
+    @Override
+    public void start(Stage stage) throws Exception {
+        Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("/fxml/Scene.fxml")));
 
-	public static void main(String[] args) {
-		launch(args);
-	}
+        Scene scene = new Scene(root);
+        scene.getStylesheets().add("/styles/Styles.css");
 
-	@Override
-	public void start(Stage stage) throws Exception {
-		instance = this;
-		this.stage = stage;
-		Parent root = FXMLLoader.load(getClass().getResource("/fxml/Scene.fxml"));
+        stage.setTitle("HISQIS Client 1.0");
+        stage.setScene(scene);
 
-		scene = new Scene(root);
-		scene.getStylesheets().add("/styles/Styles.css");
+        stage.setOnCloseRequest((t) -> {
+            Platform.exit();
+            System.exit(0);
+        });
 
-		stage.setTitle("HISQIS Client 1.0");
-		stage.setScene(scene);
+        stage.setScene(scene);
+        stage.show();
 
-		stage.setOnCloseRequest((t) -> {
-			Platform.exit();
-			System.exit(0);
-		});
+        stage.show();
+    }
 
-		stage.setScene(scene);
-		stage.show();
+    public void alert(Exception e) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Exception Dialog");
+        alert.setHeaderText("An error occurred!");
+        alert.setContentText("See Details for a stacktrace");
 
-		stage.show();
-	}
+        String exceptionText = "This should be a stacktrace...";
+        try (StringWriter sw = new StringWriter();
+             PrintWriter pw = new PrintWriter(sw)) {
+            e.printStackTrace(pw);
+            exceptionText = sw.toString();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
 
-	public Stage getStage() {
-		return stage;
-	}
+        Label label = new Label("The exception stacktrace was:");
 
-	public void alert(Exception e) {
-		Alert alert = new Alert(Alert.AlertType.ERROR);
-		alert.setTitle("Exception Dialog");
-		alert.setHeaderText("An error occurred!");
-		alert.setContentText("See Details for a stacktrace");
+        TextArea textArea = new TextArea(exceptionText);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
 
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		e.printStackTrace(pw);
-		String exceptionText = sw.toString();
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
 
-		Label label = new Label("The exception stacktrace was:");
+        GridPane expContent = new GridPane();
+        expContent.setMaxWidth(Double.MAX_VALUE);
+        expContent.add(label, 0, 0);
+        expContent.add(textArea, 0, 1);
 
-		TextArea textArea = new TextArea(exceptionText);
-		textArea.setEditable(false);
-		textArea.setWrapText(true);
+        alert.getDialogPane().setExpandableContent(expContent);
 
-		textArea.setMaxWidth(Double.MAX_VALUE);
-		textArea.setMaxHeight(Double.MAX_VALUE);
-		GridPane.setVgrow(textArea, Priority.ALWAYS);
-		GridPane.setHgrow(textArea, Priority.ALWAYS);
+        alert.showAndWait();
+        System.exit(1);
+    }
 
-		GridPane expContent = new GridPane();
-		expContent.setMaxWidth(Double.MAX_VALUE);
-		expContent.add(label, 0, 0);
-		expContent.add(textArea, 0, 1);
+    public void loginDialog() {
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.setTitle("Login");
+        dialog.setHeaderText("Please enter your Credentials!");
 
-		alert.getDialogPane().setExpandableContent(expContent);
+        ButtonType loginButtonType = new ButtonType("Login", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
 
-		alert.showAndWait();
-		System.exit(1);
-	}
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
 
-	public void loginDialog() {
-		Dialog<Pair<String, String>> dialog = new Dialog<>();
-		dialog.setTitle("Login");
-		dialog.setHeaderText("Please enter your Credentials!");
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Username");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
 
-		ButtonType loginButtonType = new ButtonType("Login", ButtonBar.ButtonData.OK_DONE);
-		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+        grid.add(new Label("Username:"), 0, 0);
+        grid.add(usernameField, 1, 0);
+        grid.add(new Label("Password:"), 0, 1);
+        grid.add(passwordField, 1, 1);
 
-		GridPane grid = new GridPane();
-		grid.setHgap(10);
-		grid.setVgap(10);
-		grid.setPadding(new Insets(20, 150, 10, 10));
+        Node loginButton = dialog.getDialogPane().lookupButton(loginButtonType);
+        loginButton.setDisable(true);
 
-		TextField usernameField = new TextField();
-		usernameField.setPromptText("Username");
-		PasswordField passwordField = new PasswordField();
-		passwordField.setPromptText("Password");
+        usernameField.textProperty().addListener((observable, oldValue, newValue)
+                -> loginButton.setDisable(newValue.trim().isEmpty()));
 
-		grid.add(new Label("Username:"), 0, 0);
-		grid.add(usernameField, 1, 0);
-		grid.add(new Label("Password:"), 0, 1);
-		grid.add(passwordField, 1, 1);
+        dialog.getDialogPane().setContent(grid);
 
-		Node loginButton = dialog.getDialogPane().lookupButton(loginButtonType);
-		loginButton.setDisable(true);
+        Platform.runLater(usernameField::requestFocus);
 
-		usernameField.textProperty().addListener((observable, oldValue, newValue) -> {
-			loginButton.setDisable(newValue.trim().isEmpty());
-		});
+        dialog.setResultConverter(dialogButton -> dialogButton == loginButtonType
+                ? new Pair<>(usernameField.getText(), passwordField.getText())
+                : null);
 
-		dialog.getDialogPane().setContent(grid);
+        Optional<Pair<String, String>> result = dialog.showAndWait();
 
-		Platform.runLater(usernameField::requestFocus);
+        result.ifPresent(usernamePassword -> {
+            username = usernamePassword.getKey();
+            password = usernamePassword.getValue();
+        });
+    }
 
-		dialog.setResultConverter(dialogButton -> {
-			if (dialogButton == loginButtonType) {
-				return new Pair<>(usernameField.getText(), passwordField.getText());
-			}
-			return null;
-		});
-
-		Optional<Pair<String, String>> result = dialog.showAndWait();
-
-		result.ifPresent(usernamePassword -> {
-			username = usernamePassword.getKey();
-			password = usernamePassword.getValue();
-		});
-	}
-
-	@Override
-	public void initialize(URL url, ResourceBundle rb) {
-		try {
-			current.setWrapText(true);
-			HisqisAPI api = new HisqisAPI();
-			loginDialog();
-			api.authenticate(username, password);
-			student = api.getStudent();
-			objects = new ArrayList<>();
-			for (CourseOfStudy c : student.getCourses()) {
-				objects.add(c);
-				subjectList.getItems().add(c.getGraduationName());
-				for (Category ca : c.getCategories()) {
-					objects.add(ca);
-					subjectList.getItems().add("\t" + ca.getSubject());
-					for (Account a : ca.getAccounts()) {
-						objects.add(a);
-						subjectList.getItems().add("\t\t" + a.getSubject());
-						for (Mark m : a.getMarks()) {
-							objects.add(m);
-							subjectList.getItems().add("\t\t\t" + m.getSubject());
-						}
-					}
-				}
-			}
-			subjectList.setOnMouseClicked((event) -> {
-				int index = subjectList.getSelectionModel().getSelectedIndex();
-				Object clicked = objects.get(index);
-				if (clicked instanceof CourseOfStudy) {
-					CourseOfStudy course = (CourseOfStudy) clicked;
-					AtomicInteger ects = new AtomicInteger(0);
-					course.getCategories().forEach((cat) -> ects.addAndGet(cat.getEcts()));
-					current.setText(
-							"Graduation Name: " + course.getGraduationName() + "\n\n" +
-									"Average Grade: " + course.getAverageGrade() + "\n\n" +
-									"ECTS: " + ects.intValue());
-				} else if (clicked instanceof Category) {
-					Category category = (Category) clicked;
-					current.setText(
-							"Number: " + category.getNumber() + "\n\n" +
-									"Subject: " + category.getSubject() + "\n\n" +
-									"Average Grade: " + category.getGrade() + "\n\n" +
-									"ECTS: " + category.getEcts());
-				} else if (clicked instanceof Account) {
-					Account account = (Account) clicked;
-					current.setText(
-							"Number: " + account.getNumber() + "\n\n" +
-									"Subject: " + account.getSubject() + "\n\n" +
-									"Semester: " + account.getSemester() + "\n\n" +
-									"State: " + account.getState() + "\n\n" +
-									"ECTS: " + account.getEcts());
-				} else if (clicked instanceof Mark) {
-					Mark mark = (Mark) clicked;
-					current.setText(
-							"Number: " + mark.getNumber() + "\n\n" +
-									"Subject: " + mark.getSubject() + "\n\n" +
-									"Semester: " + mark.getSemester() + "\n\n" +
-									"Grade: " + mark.getGrade() + "\n\n" +
-									"State: " + mark.getState() + "\n\n" +
-									"ECTS: " + mark.getEcts() + "\n\n" +
-									"Note: " + mark.getNote() + "\n\n" +
-									"Attempt: " + mark.getAttempt() + "\n\n" +
-									"Date: " +
-									DateFormat.getDateInstance().format(mark.getDate()));
-				}
-			});
-		} catch (Exception e) {
-			e.printStackTrace();
-			alert(e);
-		}
-	}
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        try {
+            current.setWrapText(true);
+            HisqisAPI api = new HisqisAPI();
+            loginDialog();
+            api.authenticate(username, password);
+            Student student = api.getStudent();
+            objects = new ArrayList<>();
+            for (CourseOfStudy c : student.getCourses()) {
+                objects.add(c);
+                subjectList.getItems().add(c.getGraduationName());
+                for (Category ca : c.getCategories()) {
+                    objects.add(ca);
+                    subjectList.getItems().add("\t" + ca.getSubject());
+                    for (Account a : ca.getAccounts()) {
+                        objects.add(a);
+                        subjectList.getItems().add("\t\t" + a.getSubject());
+                        for (Mark m : a.getMarks()) {
+                            objects.add(m);
+                            subjectList.getItems().add("\t\t\t" + m.getSubject());
+                        }
+                    }
+                }
+            }
+            subjectList.setOnMouseClicked((event) -> {
+                int index = subjectList.getSelectionModel().getSelectedIndex();
+                Object clicked = objects.get(index);
+                if (clicked instanceof CourseOfStudy) {
+                    CourseOfStudy course = (CourseOfStudy) clicked;
+                    AtomicInteger ects = new AtomicInteger(0);
+                    course.getCategories().forEach((cat) -> ects.addAndGet(cat.getEcts()));
+                    current.setText(
+                            "Graduation Name: " + course.getGraduationName() + "\n\n"
+                                    + "Average Grade: " + course.getAverageGrade() + "\n\n"
+                                    + "ECTS: " + ects.intValue());
+                } else if (clicked instanceof Category) {
+                    Category category = (Category) clicked;
+                    current.setText(
+                            "Number: " + category.getNumber() + "\n\n"
+                                    + "Subject: " + category.getSubject() + "\n\n"
+                                    + "Average Grade: " + category.getGrade() + "\n\n"
+                                    + "ECTS: " + category.getEcts());
+                } else if (clicked instanceof Account) {
+                    Account account = (Account) clicked;
+                    current.setText(
+                            "Number: " + account.getNumber() + "\n\n"
+                                    + "Subject: " + account.getSubject() + "\n\n"
+                                    + "Semester: " + account.getSemester() + "\n\n"
+                                    + "State: " + account.getState() + "\n\n"
+                                    + "ECTS: " + account.getEcts());
+                } else if (clicked instanceof Mark) {
+                    Mark mark = (Mark) clicked;
+                    current.setText(
+                            "Number: " + mark.getNumber() + "\n\n"
+                                    + "Subject: " + mark.getSubject() + "\n\n"
+                                    + "Semester: " + mark.getSemester() + "\n\n"
+                                    + "Grade: " + mark.getGrade() + "\n\n"
+                                    + "State: " + mark.getState() + "\n\n"
+                                    + "ECTS: " + mark.getEcts() + "\n\n"
+                                    + "Note: " + mark.getNote() + "\n\n"
+                                    + "Attempt: " + mark.getAttempt() + "\n\n"
+                                    + "Date: "
+                                    + DateFormat.getDateInstance().format(mark.getDate()));
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert(e);
+        }
+    }
 
 }
